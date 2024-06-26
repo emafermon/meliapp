@@ -21,7 +21,7 @@ app.get(
     }
 
     const { username, password } = req.body;
-    if (username !== user.username || !(await bcrypt.compare(password, user.password))) {
+    if (username !== user.username || !(await bcrypt.compare (password, user.password))) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
@@ -29,6 +29,11 @@ app.get(
     res.json({ token });
   }
 );
+
+// Root GET endpoint
+app.get('/', async (req: Request, res: Response) => {
+  res.json({ message: 'Welcome to my challenging api' });
+});
 
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
