@@ -1,40 +1,11 @@
 import express, { Express, Request, Response } from 'express';
-import { body, validationResult } from 'express-validator';
-import bcrypt from 'bcrypt';
-import { user, generateToken, verifyToken } from './auth';
+import routes from './routes';
+import logger from './logger';
 
 const app: Express = express();
+app.use(routes);
 const port = 3000;
 
-// Brute force endpoint
-app.get(
-  '/brute_force',
-  [
-    body('username').notEmpty(),
-    body('password').notEmpty(),
-    verifyToken,
-  ],
-  async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { username, password } = req.body;
-    if (username !== user.username || !(await bcrypt.compare (password, user.password))) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const token = generateToken(user.id);
-    res.json({ token });
-  }
-);
-
-// Root GET endpoint
-app.get('/', async (req: Request, res: Response) => {
-  res.json({ message: 'Welcome to my challenging api' });
-});
-
 app.listen(port, () => {
-  console.log(`Server started on port ${port}`);
+  logger.info(`Server started on port ${port}`);
 });

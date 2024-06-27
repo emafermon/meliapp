@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - JWT_SECRET_KEY:${JWT_SECRET_KEY}
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
+      - LOG_FILE=${LOG_FILE}

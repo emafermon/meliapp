@@ -1,5 +1,5 @@
 # Use the Alpine Linux base image
-FROM node:18-alpine as base
+FROM node:18-alpine AS base
 
 # Set the working directory
 WORKDIR /app
@@ -22,7 +22,7 @@ RUN npm run lint
 RUN npm run build
 
 # Use a smaller runtime image
-FROM node:18-alpine as runtime
+FROM node:18-alpine AS runtime
 
 # Set the working directory
 WORKDIR /app
@@ -30,8 +30,11 @@ WORKDIR /app
 # Copy the compiled JavaScript files from the build stage
 COPY --from=base /app/dist ./dist
 
+# Copy tnode_modules folder
+COPY --from=base /app/node_modules ./node_modules
+
 # Expose the port
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/index.js"]
