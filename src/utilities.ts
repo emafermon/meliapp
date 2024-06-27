@@ -6,9 +6,11 @@ export interface LogData {
     request: string;
     status: string;
     size: string;
+    referrer: string;
+    userAgent: string;
 }
 
-const regex: RegExp = /^(\S+) (\S+) (\S+) \[(.*?)\] "(.*?)" (\d{3}) (\d+)$/;
+const regex: RegExp = /^(\S+) (\S+) (\S+) \[(.*?)\] "(.*?)" (\d{3}) (\d+) "(.*?)" "(.*?)"/;
 const fields: (keyof LogData)[] = [
     'ip',
     'identity',
@@ -16,7 +18,9 @@ const fields: (keyof LogData)[] = [
     'timestamp',
     'request',
     'status',
-    'size'
+    'size',
+    'referrer',
+    'userAgent'
 ];
 
 export function parseLogLine(line: string): LogData {

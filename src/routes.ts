@@ -68,7 +68,10 @@ router.get('/sql-injection', (req: Request, res: Response) => {
             logger.info(`OS command output: ${stdout}`);
             const logLines = stdout.trim().split('\n');
             const parsedLogs: LogData[] = logLines.map(parseLogLine);
-            res.status(200).json({ daysBetween: diffInDays, commandOutput:  parsedLogs});
+            const vulnerableEndPoints: string[] = [...new Set(parsedLogs
+                .filter(log => log.status === '200' || log.status === '204')
+                .map(log => log.request.split('?')[0]))];
+            res.status(200).json({ message: "Please check validations in input fields for this vulnerableEndPoints", vulnerableEndPoints: vulnerableEndPoints, matchingRequests: parsedLogs });
         });
     } catch (err) {
         logger.error(`Error calculating days between dates: ${err}`);
@@ -76,12 +79,12 @@ router.get('/sql-injection', (req: Request, res: Response) => {
     }
 });
 
-router.get('/xss', verifyToken, (req: Request, res: Response) => {
+router.get('/xss', (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
-    if (!startDate || !endDate) {
-        return res.status(400).json({ message: 'Both start and end dates are required' });
-    }
+    // if (!startDate || !endDate) {
+    //     return res.status(400).json({ message: 'Both start and end dates are required' });
+    // }
 
     try {
         const start = new Date(startDate as string);
@@ -89,7 +92,17 @@ router.get('/xss', verifyToken, (req: Request, res: Response) => {
         const diffInDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
         logger.info(`Calculated the number of days between ${startDate} and ${endDate} as ${diffInDays}`);
-        res.status(200).json({ daysBetween: diffInDays });
+        exec(`grep -Ei '(%3Cscript\\b|%3Chtml\\b|%3Ciframe\\b|%3Cembed\\b|%3Cobject\\b|%3Clink\\b|%3Cstyle\\b|\\bjavascript:\\b|\\bonload=\\b|\\bonclick=\\b|\\bonerror=\\b|\\bonmouseover=\\b)' /app/data/access.log`, (error, stdout) => {
+            if (error) {
+                logger.error(`Error executing OS command: ${error}`);
+                return res.status(500).json({ message: 'Error executing OS command' });
+            }
+
+            logger.info(`OS command output: ${stdout}`);
+            const logLines = stdout.trim().split('\n');
+            const parsedLogs: LogData[] = logLines.map(parseLogLine);
+            res.status(200).json({ daysBetween: diffInDays, commandOutput: parsedLogs });
+        });
     } catch (err) {
         logger.error(`Error calculating days between dates: ${err}`);
         res.status(400).json({ message: 'Invalid date format' });
