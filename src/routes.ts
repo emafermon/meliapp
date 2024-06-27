@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcrypt';
-import { exec } from 'child_process';
 import { user, generateToken, verifyToken } from './auth';
-import { parseLogLine, LogData } from './utilities';
+import { executeCommand, parseLogLine, LogData } from './utilities';
 import logger from './logger';
 
 const router = express.Router();
@@ -41,7 +40,7 @@ router.post(
 );
 
 
-router.get('/sql-injection', (req: Request, res: Response) => {
+router.get('/sql-injection', async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
     // if (!startDate || !endDate) {
@@ -59,27 +58,15 @@ router.get('/sql-injection', (req: Request, res: Response) => {
         //show number of accesses from a same IP in a given time
         //if matches criteria it should be an sql-injection attack
         //Recomend implementing input sanitazion in and verify DB user permission for the matching URI
-        exec(`grep -Ei '(\\bselect\\b|\\bfrom\\b|\\bwhere\\b|\\bunion\\b|\\bjoin\\b|\\binsert\\b|\\bupdate\\b|\\bdelete\\b|\\bdrop\\b|\\bcreate\\b|\\balter\\b|\\bexec+\\b|\\bexecute\\b|\\bxp_cmdshell\\b)' /app/data/access.log`, (error, stdout) => {
-            if (error) {
-                logger.error(`Error executing OS command: ${error}`);
-                return res.status(500).json({ message: 'Error executing OS command' });
-            }
-
-            logger.info(`OS command output: ${stdout}`);
-            const logLines = stdout.trim().split('\n');
-            const parsedLogs: LogData[] = logLines.map(parseLogLine);
-            const vulnerableEndPoints: string[] = [...new Set(parsedLogs
-                .filter(log => log.status === '200' || log.status === '204')
-                .map(log => log.request.split('?')[0]))];
-            res.status(200).json({ message: "Please check validations in input fields for this vulnerableEndPoints", vulnerableEndPoints: vulnerableEndPoints, matchingRequests: parsedLogs });
-        });
+        const sqlQuery = `grep -Ei '(\\bselect\\b|\\bfrom\\b|\\bwhere\\b|\\bunion\\b|\\bjoin\\b|\\binsert\\b|\\bupdate\\b|\\bdelete\\b|\\bdrop\\b|\\bcreate\\b|\\balter\\b|\\bexec+\\b|\\bexecute\\b|\\bxp_cmdshell\\b)'`;
+        res.status(200).json(await executeCommand(sqlQuery));
     } catch (err) {
         logger.error(`Error calculating days between dates: ${err}`);
         res.status(400).json({ message: 'Invalid date format' });
     }
 });
 
-router.get('/xss', (req: Request, res: Response) => {
+router.get('/xss', async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
     // if (!startDate || !endDate) {
@@ -92,17 +79,8 @@ router.get('/xss', (req: Request, res: Response) => {
         const diffInDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
         logger.info(`Calculated the number of days between ${startDate} and ${endDate} as ${diffInDays}`);
-        exec(`grep -Ei '(%3Cscript\\b|%3Chtml\\b|%3Ciframe\\b|%3Cembed\\b|%3Cobject\\b|%3Clink\\b|%3Cstyle\\b|\\bjavascript:\\b|\\bonload=\\b|\\bonclick=\\b|\\bonerror=\\b|\\bonmouseover=\\b)' /app/data/access.log`, (error, stdout) => {
-            if (error) {
-                logger.error(`Error executing OS command: ${error}`);
-                return res.status(500).json({ message: 'Error executing OS command' });
-            }
-
-            logger.info(`OS command output: ${stdout}`);
-            const logLines = stdout.trim().split('\n');
-            const parsedLogs: LogData[] = logLines.map(parseLogLine);
-            res.status(200).json({ daysBetween: diffInDays, commandOutput: parsedLogs });
-        });
+        const xssQuery = `grep -Ei '(%3Cscript\\b|%3Chtml\\b|%3Ciframe\\b|%3Cembed\\b|%3Cobject\\b|%3Clink\\b|%3Cstyle\\b|\\bjavascript:\\b|\\bonload=\\b|\\bonclick=\\b|\\bonerror=\\b|\\bonmouseover=\\b)'`;
+        res.status(200).json(await executeCommand(xssQuery));
     } catch (err) {
         logger.error(`Error calculating days between dates: ${err}`);
         res.status(400).json({ message: 'Invalid date format' });

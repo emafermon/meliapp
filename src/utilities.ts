@@ -1,3 +1,8 @@
+
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import logger from './logger';
+
 export interface LogData {
     ip: string;
     identity: string;
@@ -33,6 +38,23 @@ export function parseLogLine(line: string): LogData {
         logData[fields[i - 1]] = match[i];
     }
     return logData;
+}
+
+const execPromise = promisify(exec);
+
+export async function executeCommand(regexQuery: string) {
+    const { stdout, stderr } = await execPromise(`${regexQuery} /app/data/access.log`);
+    if (stderr) {
+        logger.error(`Error executing OS command: ${stderr}`);
+        return { message: 'Error retrieving data' };
+    }
+    logger.info(`OS command output: ${stdout}`);
+    const logLines = stdout.trim().split('\n');
+    const parsedLogs: LogData[] = logLines.map(parseLogLine);
+    const vulnerableEndPoints: string[] = [...new Set(parsedLogs
+        .filter(log => log.status === '200' || log.status === '204')
+        .map(log => log.request.split('?')[0]))];
+    return { message: "Please check validations in input fields for this vulnerableEndPoints", vulnerableEndPoints: vulnerableEndPoints, matchingRequests: parsedLogs };
 }
 
 export function getCurrentDateTime(): string {
