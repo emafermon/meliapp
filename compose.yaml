@@ -5,8 +5,10 @@ services:
       target: runtime
     ports:
       - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ${APACHE_LOGS}/:/app/data
+      - ${LOG_FOLDER}/:/app/logs
     environment:
       - JWT_SECRET_KEY:${JWT_SECRET_KEY}
       - USERNAME=${USERNAME}
       - PASSWORD=${PASSWORD}
-      - LOG_FILE=${LOG_FILE}

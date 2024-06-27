@@ -1,0 +1,8 @@
+grep -E '(?i)(<script|<iframe|<embed|<object|<link|<style|javascript:|onload=|onclick=|onerror=|onmouseover=)'
+grep -E '(?i)(select|from|where|union|join|insert|update|delete|drop|create|alter|exec|execute|xp_cmdshell)'
+
+grep -Ei '(\bselect\b|\bfrom\b|\bwhere\b|\bunion\b|\bjoin\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bcreate\b|\balter\b|\bexec+\b|\bexecute\b|\bxp_cmdshell\b)'
+grep -Ei '(%3Cscript\b|%3Chtml\b|%3Ciframe\b|%3Cembed\b|%3Cobject\b|%3Clink\b|%3Cstyle\b|\bjavascript:\b|\bonload=\b|\bonclick=\b|\bonerror=\b|\bonmouseover=\b)'
+grep -Ei '\bUNION\b|\bSELECT\b|\bCHAR\b'
+
+grep -Eo 'GET [^?]+\?([^" ]+)' logs/access.log | awk -F'?' '{print $2}'

@@ -16,7 +16,7 @@ const logger = createLogger({
   ),
   transports: [
     new transports.Console(),
-    new transports.File({ filename: process.env.LOG_FILE })
+    new transports.File({ filename: '/app/logs/app.log' })
   ]
 });
 
