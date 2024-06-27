@@ -1,0 +1,18 @@
+services:
+  vuln_app:
+    image: vulnerables/web-dvwa
+    volumes:
+      - ${APACHE_LOGS}/:/var/log/apache2/
+  app:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ${APACHE_LOGS}/:/app/data
+      - ${LOG_FOLDER}/:/app/logs
+    environment:
+      - JWT_SECRET_KEY:${JWT_SECRET_KEY}
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
